@@ -205,8 +205,8 @@ def move(channel_id, request, player):
 def index():
     parameters = ['play','quit','move','help', 'gamestatus']
     info = request.form
-    token = info.get('token', None) #VALIDATE TOKEN
-    command = info.get('command', None) # do I need this?
+    token = info.get('token', None) 
+    command = info.get('command', None) 
     text = info.get('text', None)
     channel = info.get('channel_id')
     response = {
