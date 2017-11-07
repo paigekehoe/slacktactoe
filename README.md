@@ -1,5 +1,5 @@
 # Slack Tac Toe
-Slack app for tic tac toe game - Flask app built in python and hosted in Google Cloud Apps
+Slack app for tic tac toe game - Flask app built in python and hosted on Google Cloud Apps
 
 Slash command **/ttt** in any channel will allow a user to play Tic Tac Toe against another 
 
