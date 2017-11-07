@@ -5,11 +5,15 @@ from flask import Flask, request, jsonify, abort
 import game
 import keys
 
+## A simple tic tac toe slack application
+## Author: Paige Kehoe
+## Date: 11/6/17
+
 SLACK_TOKEN = os.environ['SLACK_TOKEN']
-## getting the SLACK_TOKEN from os env variable exported
+## getting the SLACK_TOKEN from hidden variable :)
 
 active_games = {}
-##THIS IS A TEST TOKEN AND NEEDS TO BE REMOVED WHEN OAUTH IS IMPLEMENTED
+
 
 slack_client = SlackClient(SLACK_TOKEN)
 
@@ -40,8 +44,8 @@ def new_game(channel_id, player0, player1):
             "response_type":"ephemeral",
             "text": "I'm sorry there is already an active game in this channel",
         }
-    if (player1 == "") or (player0 == player1):
-        #TODO stronger p1 validation against users list
+    #check for playing self or for null opponent
+    elif (player1 == "") or (player0 == player1):
           message = {
             "response_type":"ephemeral",
             "text": "That is not a valid opponent in this channel",
@@ -49,16 +53,8 @@ def new_game(channel_id, player0, player1):
     else:
         #TO DO validate both users are in channel and not deleted - (player1 not in channel_id.info.members) 
         new_game = game.Game()
-        print(player0)
-        print(player1)
         tempStr =player1.split("|")
-        print tempStr
         player1 = tempStr[0][2:]
-        print player1
-        p0 = "<@"+player0+">"
-       # print p1
-        #set-up game Game(player1, player2)
-        #return game message
         new_game.set_up(player0, player1)
         active_games[channel_id]=new_game
         message = {
@@ -76,17 +72,14 @@ def help(channel_id):
     return message
 
 def end_game(channel_id, user_id):
-    message = {
-            "response_type": "ephemeral",
-            "text": "Sorry that was invalid",
-            }
     game_obj = active_games.get(channel_id, None)
+    #check if no game is in the channel
     if game_obj == None:
         message = {
             "response_type":"ephemeral",
             "text": "Sorry there is no active game in this channel at this time."
         }
-    return message
+        return message
     if user_id != game_obj.player_1 or game_obj.player_0:
         message = {
             "response_type":"ephemeral",
@@ -96,28 +89,27 @@ def end_game(channel_id, user_id):
         #Call P0/Os Win Message 
         message = {
             "response_type": "in_channel",
-            "text": "Hey !channel " + "we have a tic tac toe winner and it's: <@" + game_obj.player_0 + ">",
+            "text": "Hey <@"+ channel_id + "> we have a tic tac toe winner and it's: <@" + game_obj.player_0 + ">\n" + print_board(game_obj.board),
         }
     elif game_obj.end_condition == 3:
         #Call P1/Xs Win Message
         message = {
             "response_type": "in_channel",
-            "text": "Hey !channel " + "we have a tic tac toe winner and it's: <@" + game_obj.player_1 + ">",
+            "text": "Hey <@"+ channel_id + "> we have a tic tac toe winner and it's: <@" + game_obj.player_1 + ">\n" + print_board(game_obj.board),
         }
     elif game_obj.end_condition == 4:
         #Call draw game
         message = {
             "response_type": "in_channel",
-            "text": "Hey !channel this game is over and it ended in a draw :(",
+            "text": "Hey <@"+ channel_id + "> this game is over and it ended in a draw :(\n" + print_board(game_obj.board),
         }
-    else:
+    elif user_id != None:
         message = {
             "response_type": "in_channel",
-            "text": user_id + "Decided to quit the game :(",
+            "text":"<@"+ user_id + "> decided to quit the game :(",
         }
 
     active_games[channel_id]=None
-
     return message
 
 
@@ -154,10 +146,15 @@ def move(channel_id, request, player):
             "text": "Sorry there is no active game in this channel at this time.",
             }
         return message
-    print "statement "+ game.player_1 + " and this is counter: " + str(game.turn_count) + " and this is p1 " + game.player_0 + " and this is player " + player
-    #statement U7VQCMCKG and this is counter: 0 and this is p1 U7V2GQZ9T and this is player U7V2GQZ9T
-
-    if (game.turn_count%2 == 0 and player != game.player_0) or (game.turn_count%2 == 1 and player != game.player_1):
+    print "statement "+ game.player_1 + " and this is counter: " + str(game.turn_count) + " and this is p0 " + game.player_0 + " and this is player " + player
+    #statement U7VQCMCKG and this is counter: 0 and this is p0 U7V2GQZ9T and this is player0 U7V2GQZ9T
+    if (game.turn_count%2 == 1 and player != game.player_1):
+        message = {
+            "response_type": "ephemeral",
+            "text": "Nice try! But it's not your turn",
+        }
+        return message
+    if (game.turn_count%2 == 0 and player != game.player_0):
         message = {
             "response_type": "ephemeral",
             "text": "Nice try! But it's not your turn",
@@ -171,11 +168,12 @@ def move(channel_id, request, player):
             "text": "That is not a valid move",
         }   
         return message
-    if not game.is_free(number):
+    if game.is_free(number) == False:
         message = {
             "response_type": "ephemeral",
             "text": "That is not a valid move",
         }
+        return message
     #TO DO: verify player is in game and channel
     if player == game.player_0 and game.turn_count == 0:
         p0 = "<@"+player+">"
@@ -183,17 +181,19 @@ def move(channel_id, request, player):
         game.turn(number)
         message = {
             "response_type":"in_channel",
-            "text": "<@" + game.player_0 + "> has challenged <@" + game.player_1 + "> to a game of tic tac toe!\nCurrent board is "+print_board(game.board) + "\n<@" + game.player_1 + "> please make your move",
+            "text": "<@" + game.player_0 + "> has challenged <@" + game.player_1 + "> to a game of tic tac toe!\nCurrent board is\n"+print_board(game.board) + "\n<@" + game.player_1 + "> please make your move",
             }
-    game.turn(number)
-    message = {
-        "response_type":"in_channel",
-        "text": "current board status:\n" + print_board(game.board),
-    }
-    if game.check_win == True:
-        return end_game(channel, player)
-    else:
         return message
+    game.turn(number)
+    if game.check_win() == True:
+        return end_game(channel_id, player)
+    else:
+        message = {
+            "response_type":"in_channel",
+            "text": "current board status:\n" + print_board(game.board),
+        }
+
+    return message
 
 ##if statement to determine responses to /ttt command 
 ##valid input params: command, @username, space to move
@@ -214,8 +214,8 @@ def index():
             "text":"I'm not sure what you are trying to say.\nPlease type /ttt help to see a list of valid commands",
             }
     ##if invalid token
-    if token != SLACK_TOKEN:
-        return "Invalid token for /ttt"
+    # if token != SLACK_TOKEN:
+    #     return "Invalid token for /ttt"
     if 'ttt' not in command:
         return "invalid request"
 
@@ -235,7 +235,6 @@ def index():
     if text == 'help':
         response = help(channel)
 
-    print(response)
     return jsonify(response)
 
 

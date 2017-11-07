@@ -53,10 +53,10 @@ class Game:
 		return self.board
 
 	def is_free(self, spot):
-		if spot >10:
+		if spot >9:
 			#this spot is outside the board size
-			return None
-		elif self.board[spot-1] == 9:
+			return False
+		if self.board[spot-1] == 9:
 			return True
 		else:
 			return False
