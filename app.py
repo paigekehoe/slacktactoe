@@ -5,14 +5,13 @@ from flask import Flask, request, jsonify, abort
 import game
 import keys
 
-#SLACK_TOKEN = os.environ['keys]
-SLACK_TOKEN = '2gETAxcRqM1kmMSc1SiPtIOk'
+SLACK_TOKEN = os.environ['SLACK_TOKEN']
 ## getting the SLACK_TOKEN from os env variable exported
 
 active_games = {}
 ##THIS IS A TEST TOKEN AND NEEDS TO BE REMOVED WHEN OAUTH IS IMPLEMENTED
 
-slack_client = SlackClient('2gETAxcRqM1kmMSc1SiPtIOk')
+slack_client = SlackClient(SLACK_TOKEN)
 
 #key for board to display for users in help
 board_key =  "|  1  |  2  |  3  |\n|----+----+----|\n|  4  |  5  |  6  |\n|----+----+----|\n|  7  |  8  |  9  |"
@@ -21,7 +20,7 @@ app = Flask(__name__)
 
 def setup():
     channels_call = slack_client.api_call("channels.list", exclude_archived=1)
-    ##setting up app for team
+
     lookup_table = {}
     if channels_call.get('ok'):
         for channel in channel_call:

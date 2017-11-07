@@ -1,13 +1,15 @@
-##CLass file for Tic Tac Toe Game Object
+## Class file for Tic Tac Toe Game Object
+## Author: Paige Kehoe
+## Date: 11/6/17
 
 class Game:
 
 	def __init__(self):
-		self.turn_count=0
+		self.turn_count=0 #turn counting variable
 		self.player_0 = '' #challenger is saves as P0 and plays Os
 		self.player_1 = '' #responder is saved as P1 and plays Xs
 		self.board = [9] * 9 #creates a list for a 3X3 game board with 9 in every spot
-		self.end_condition = None
+		self.end_condition = None #integer variable to hold number codes for end game condidition
 		# Board Index Key:
 		# 0    1    2
 		# 3    4    5
